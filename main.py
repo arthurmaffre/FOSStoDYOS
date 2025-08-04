@@ -29,7 +29,9 @@ def get_dates_from_file(uploaded_file):
                     dates.add(parsed_date)
                 except ValueError:
                     pass
-    return sorted(list(dates))
+    sorted_dates_str = sorted(list(dates))
+    available_dates_obj = [datetime.strptime(d, '%d/%m/%Y').date() for d in sorted_dates_str]
+    return sorted_dates_str, available_dates_obj
 
 def process_file(uploaded_file, selected_date):
     Nom_colonne = ["Nom de parcelle", "Cépage", "Date analyse", "Code échantillon", "Quantité Sucre (mg/baie)", "TAP (% vol)", "Acidité totale (g H2SO4/l)", "pH", "Acide malique (g/l)", "Acide tartrique", "Azote assimilable (mg/l)", "Potassium (g/l)", "Anthocyanes (mg/l)"]
@@ -88,7 +90,7 @@ st.markdown("""
     .stButton > button:hover {
         background-color: #0077ed;
     }
-    .stSelectbox > div > div {
+    .stDateInput > div > div {
         background-color: white;
         border-radius: 8px;
         border: 1px solid #d2d2d7;
@@ -129,14 +131,29 @@ uploaded_file = st.file_uploader("Charger le fichier source (.xlsx)", type="xlsx
 
 if uploaded_file:
     with st.spinner("Analyse du fichier..."):
-        dates = get_dates_from_file(uploaded_file)
+        sorted_dates_str, available_dates_obj = get_dates_from_file(uploaded_file)
     
-    if dates:
-        selected_date = st.selectbox("Sélectionner la date", dates, index=0)
+    if available_dates_obj:
+        default_date = max(available_dates_obj)  # Sélection automatique de la date la plus récente
+        min_date = min(available_dates_obj)
+        max_date = max(available_dates_obj)
+        
+        selected_date_obj = st.date_input(
+            "Sélectionner la date",
+            value=default_date,
+            min_value=min_date,
+            max_value=max_date,
+            format="DD/MM/YYYY"
+        )
+        
+        selected_date_str = selected_date_obj.strftime('%d/%m/%Y')
+        
+        if selected_date_str not in sorted_dates_str:
+            st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide.")
         
         if st.button("Générer le fichier"):
             with st.spinner("Génération en cours..."):
-                processed_file = process_file(uploaded_file, selected_date)
+                processed_file = process_file(uploaded_file, selected_date_str)
             
             st.download_button(
                 label="Télécharger le fichier généré",
