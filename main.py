@@ -14,8 +14,8 @@ def create_file(ws, Nom_colonne):
         ws[alphabet[count] + str(1)] = i
     return ws
 
-def get_dates_from_file(uploaded_file):
-    wb2 = load_workbook(filename=io.BytesIO(uploaded_file.read()))
+def get_dates_from_file(file_content):
+    wb2 = load_workbook(filename=io.BytesIO(file_content))
     ws2 = wb2[wb2.sheetnames[0]]
     
     max_line = ws2.max_row
@@ -33,14 +33,15 @@ def get_dates_from_file(uploaded_file):
     available_dates_obj = [datetime.strptime(d, '%d/%m/%Y').date() for d in sorted_dates_str]
     return sorted_dates_str, available_dates_obj
 
-def process_file(uploaded_file, selected_date):
+@st.cache_data
+def process_file(file_content, selected_date):
     Nom_colonne = ["Nom de parcelle", "Cépage", "Date analyse", "Code échantillon", "Quantité Sucre (mg/baie)", "TAP (% vol)", "Acidité totale (g H2SO4/l)", "pH", "Acide malique (g/l)", "Acide tartrique", "Azote assimilable (mg/l)", "Potassium (g/l)", "Anthocyanes (mg/l)"]
     
     wb = Workbook()
     ws = wb.active
     ws = create_file(ws, Nom_colonne)
     
-    wb2 = load_workbook(filename=io.BytesIO(uploaded_file.getvalue()))
+    wb2 = load_workbook(filename=io.BytesIO(file_content))
     ws2 = wb2[wb2.sheetnames[0]]
     
     max_line = ws2.max_row
@@ -130,8 +131,9 @@ st.title("Export Moûts FOSS vers Dyostem")
 uploaded_file = st.file_uploader("Charger le fichier source (.xlsx)", type="xlsx")
 
 if uploaded_file:
+    file_content = uploaded_file.getvalue()
     with st.spinner("Analyse du fichier..."):
-        sorted_dates_str, available_dates_obj = get_dates_from_file(uploaded_file)
+        sorted_dates_str, available_dates_obj = get_dates_from_file(file_content)
     
     if available_dates_obj:
         default_date = max(available_dates_obj)  # Sélection automatique de la date la plus récente
@@ -151,15 +153,11 @@ if uploaded_file:
         if selected_date_str not in sorted_dates_str:
             st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide.")
         
-        if st.button("Générer le fichier"):
-            with st.spinner("Génération en cours..."):
-                processed_file = process_file(uploaded_file, selected_date_str)
-            
-            st.download_button(
-                label="Télécharger le fichier généré",
-                data=processed_file,
-                file_name="export_dyostem.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        st.download_button(
+            label="Générer et télécharger le fichier",
+            data=process_file(file_content, selected_date_str),
+            file_name="export_dyostem.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     else:
         st.warning("Aucune date valide trouvée dans le fichier.")
