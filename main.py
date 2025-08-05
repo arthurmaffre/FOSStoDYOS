@@ -181,14 +181,14 @@ col1, col2 = st.columns(2)
 
 with col1:
     selected_display = st.selectbox(
-        "Sélectionner un fichier CSV du répertoire Export (dernier en premier)",
+        "Sélectionner fichier Moûts CSV (Export FOSS, récents en premier)",
         options=displayed_options,
         index=0 if displayed_options else None,
         disabled=not displayed_options
     )
 
 with col2:
-    uploaded_file = st.file_uploader("Ou charger un fichier (.csv)", type="csv")
+    uploaded_file = st.file_uploader("Ou charger Moûts CSV (.csv)", type="csv")
 
 file_content = None
 source = None
@@ -215,15 +215,15 @@ if file_content:
             formatted_name = potential_formatted
     
     if source == "selected":
-        st.info(f"Fichier sélectionné : {selected_display}")
-    with st.spinner("Analyse du fichier..."):
+        st.info(f"Fichier: {selected_display}")
+    with st.spinner("Analyse..."):
         sorted_dates_str, available_dates_obj = get_dates_from_file(file_content)
     
     if available_dates_obj:
         default_date = max(available_dates_obj)  # Sélection automatique de la date la plus récente
         
         selected_date_obj = st.date_input(
-            "Sélectionner la date",
+            "Sélectionner date (récente auto)",
             value=default_date,
             min_value=None,
             max_value=datetime.now().date(),
@@ -233,21 +233,21 @@ if file_content:
         selected_date_str = selected_date_obj.strftime('%d/%m/%Y')
         
         if selected_date_str not in sorted_dates_str:
-            st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide si vous continuez.")
+            st.warning("Date absente. Export vide?")
         
         download_file_name = f"{formatted_name}.xlsx" if formatted_name else "export_dyostem.xlsx"
         
         st.download_button(
-            label="Générer et télécharger le fichier",
+            label="Générer/télécharger XLSX Dyostem",
             data=process_file(file_content, selected_date_str),
             file_name=download_file_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     else:
-        st.warning("Aucune date valide trouvée dans le fichier.")
+        st.warning("Aucune date valide.")
 else:
     if not displayed_options:
-        st.info("Aucun fichier CSV Moûts trouvé dans le répertoire Export. Veuillez en charger un.")
+        st.info("Aucun Moûts CSV dans Export. Chargez-en un.")
 
 # Enable auto-refresh every 5 seconds (5000 ms) to detect new files transparently
 st_autorefresh(interval=5000, limit=None, key="directory_refresh")
