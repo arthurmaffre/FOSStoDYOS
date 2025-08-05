@@ -4,6 +4,8 @@ from openpyxl import Workbook
 from datetime import datetime
 import io
 import base64
+import os
+import glob
 
 st.set_page_config(page_title="Export Moûts FOSS vers Dyostem", layout="wide", initial_sidebar_state="collapsed")
 
@@ -76,6 +78,19 @@ def process_file(file_content, selected_date):
     output.seek(0)
     return output
 
+def format_filename(name):
+    if name.startswith("Moûts") and len(name) >= 20:  # Moûts + 14 digits + .csv
+        ts = name[5:-4]  # Extract timestamp part: YYYYMMDDHHMMSS
+        if len(ts) == 14 and ts.isdigit():
+            year = ts[0:4]
+            month = ts[4:6]
+            day = ts[6:8]
+            hour = ts[8:10]
+            minute = ts[10:12]
+            second = ts[12:14]
+            return f"Moûts - {year}-{month}-{day} {hour}:{minute}:{second}"
+    return name
+
 # Custom CSS for Apple-like modern UI
 st.markdown("""
     <style>
@@ -134,10 +149,53 @@ st.markdown("""
 
 st.title("Export Moûts FOSS vers Dyostem")
 
-uploaded_file = st.file_uploader("Charger le fichier source (.csv)", type="csv")
+# Define the specific directory to scan
+export_dir = r"C:\FOSS\FossIntegrator\Export"
+
+# Scan the specific directory for CSV files starting with "Moûts", sorted by modification time descending (latest first)
+if os.path.exists(export_dir):
+    all_csv_files = glob.glob(os.path.join(export_dir, "*.csv"))
+    mouts_files = [f for f in all_csv_files if os.path.basename(f).startswith("Moûts")]
+    csv_files = sorted(mouts_files, key=os.path.getmtime, reverse=True)[:6]  # Limit to the 6 most recent
+    file_basenames = [os.path.basename(f) for f in csv_files]
+    displayed_options = [format_filename(b) for b in file_basenames]
+else:
+    csv_files = []
+    file_basenames = []
+    displayed_options = []
+    st.error(f"Le répertoire {export_dir} n'existe pas. Veuillez vérifier le chemin.")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    selected_display = st.selectbox(
+        "Sélectionner un fichier CSV du répertoire Export (dernier en premier)",
+        options=displayed_options,
+        index=0 if displayed_options else None,
+        disabled=not displayed_options
+    )
+
+with col2:
+    uploaded_file = st.file_uploader("Ou charger un fichier (.csv)", type="csv")
+
+file_content = None
+source = None
+selected_file = None
 
 if uploaded_file:
     file_content = uploaded_file.getvalue()
+    source = "uploaded"
+elif selected_display:
+    index = displayed_options.index(selected_display)
+    selected_file = file_basenames[index]
+    file_path = os.path.join(export_dir, selected_file)
+    with open(file_path, "rb") as f:
+        file_content = f.read()
+    source = "selected"
+
+if file_content:
+    if source == "selected":
+        st.info(f"Fichier sélectionné : {selected_display}")
     with st.spinner("Analyse du fichier..."):
         sorted_dates_str, available_dates_obj = get_dates_from_file(file_content)
     
@@ -163,3 +221,6 @@ if uploaded_file:
         )
     else:
         st.warning("Aucune date valide trouvée dans le fichier.")
+else:
+    if not displayed_options:
+        st.info("Aucun fichier CSV Moûts trouvé dans le répertoire Export. Veuillez en charger un.")
