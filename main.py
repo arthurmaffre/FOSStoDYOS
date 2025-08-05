@@ -137,21 +137,17 @@ if uploaded_file:
     
     if available_dates_obj:
         default_date = max(available_dates_obj)  # Sélection automatique de la date la plus récente
-        min_date = min(available_dates_obj)
-        max_date = max(available_dates_obj)
         
         selected_date_obj = st.date_input(
             "Sélectionner la date",
             value=default_date,
-            min_value=min_date,
-            max_value=max_date,
             format="DD/MM/YYYY"
         )
         
         selected_date_str = selected_date_obj.strftime('%d/%m/%Y')
         
         if selected_date_str not in sorted_dates_str:
-            st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide.")
+            st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide si vous continuez.")
         
         st.download_button(
             label="Générer et télécharger le fichier",
