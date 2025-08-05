@@ -85,11 +85,19 @@ def format_filename(name):
             ts = ts[:14]  # Take only first 14 digits if longer
             year = ts[0:4]
             month = ts[4:6]
-            day = ts[6:8]
-            hour = ts[8:10]
-            minute = ts[10:12]
-            second = ts[12:14]
-            return f"Moûts - {year}-{month}-{day} {hour}:{minute}:{second}"
+            day = int(ts[6:8])
+            hour = int(ts[8:10])
+            minute = int(ts[10:12])
+            second = int(ts[12:14])
+            months = {
+                '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
+                '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
+                '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
+            }
+            month_str = months.get(month, month)
+            date_str = f"{day} {month_str} {year}"
+            time_str = f"{hour}h{minute}m{second}s"
+            return f"Moûts - {date_str} - {time_str}"
     return name
 
 # Custom CSS for Apple-like modern UI
