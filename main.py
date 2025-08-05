@@ -202,7 +202,15 @@ elif selected_display:
         file_content = f.read()
     source = "selected"
 
+formatted_name = None
 if file_content:
+    if source == "selected":
+        formatted_name = selected_display
+    elif source == "uploaded":
+        potential_formatted = format_filename(uploaded_file.name)
+        if potential_formatted != uploaded_file.name:
+            formatted_name = potential_formatted
+    
     if source == "selected":
         st.info(f"Fichier sélectionné : {selected_display}")
     with st.spinner("Analyse du fichier..."):
@@ -224,10 +232,12 @@ if file_content:
         if selected_date_str not in sorted_dates_str:
             st.warning("La date sélectionnée n'est pas disponible dans le fichier. L'export sera vide si vous continuez.")
         
+        download_file_name = f"{formatted_name}.xlsx" if formatted_name else "export_dyostem.xlsx"
+        
         st.download_button(
             label="Générer et télécharger le fichier",
             data=process_file(file_content, selected_date_str),
-            file_name="export_dyostem.xlsx",
+            file_name=download_file_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     else:
