@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
 from datetime import datetime
 import io
 import base64
@@ -15,17 +15,15 @@ def create_file(ws, Nom_colonne):
     return ws
 
 def get_dates_from_file(file_content):
-    wb2 = load_workbook(filename=io.BytesIO(file_content))
-    ws2 = wb2[wb2.sheetnames[0]]
+    df = pd.read_csv(io.BytesIO(file_content), sep=';', encoding='iso-8859-1')
     
-    max_line = ws2.max_row
     dates = set()
-    for row in range(2, max_line + 1):
-        if ws2.cell(row=row, column=2).value == "Moûts":
-            date_value = ws2.cell(row=row, column=4).value
+    for _, row in df.iterrows():
+        if row['Product'] == "Moûts":
+            date_value = row['Date']
             if date_value:
                 try:
-                    parsed_date = datetime.strptime(str(date_value)[:10], '%Y-%m-%d').strftime('%d/%m/%Y')
+                    parsed_date = datetime.strptime(date_value, '%d/%m/%Y').strftime('%d/%m/%Y')
                     dates.add(parsed_date)
                 except ValueError:
                     pass
@@ -41,29 +39,26 @@ def process_file(file_content, selected_date):
     ws = wb.active
     ws = create_file(ws, Nom_colonne)
     
-    wb2 = load_workbook(filename=io.BytesIO(file_content))
-    ws2 = wb2[wb2.sheetnames[0]]
-    
-    max_line = ws2.max_row
+    df = pd.read_csv(io.BytesIO(file_content), sep=';', encoding='iso-8859-1')
     
     ligne_ws = 1
-    for row in range(2, max_line + 1):
-        if ws2.cell(row=row, column=2).value == "Moûts":
-            date_value = ws2.cell(row=row, column=4).value
-            if date_value and datetime.strptime(str(date_value)[:10], '%Y-%m-%d').strftime('%d/%m/%Y') == selected_date:
+    for _, row in df.iterrows():
+        if row['Product'] == "Moûts":
+            date_value = row['Date']
+            if date_value and datetime.strptime(date_value, '%d/%m/%Y').strftime('%d/%m/%Y') == selected_date:
                 ligne_ws += 1
-                ws.cell(row=ligne_ws, column=1).value = ws2.cell(row=row, column=3).value  # A: C
-                ws.cell(row=ligne_ws, column=2).value = "Sauvignon blanc"  # B: Hardcoded
-                ws.cell(row=ligne_ws, column=3).value = datetime.strptime(str(date_value)[:10], '%Y-%m-%d').strftime('%d/%m/%Y')  # C: D formatted
-                ws.cell(row=ligne_ws, column=5).value = ws2.cell(row=row, column=5).value  # E: E
-                ws.cell(row=ligne_ws, column=6).value = ws2.cell(row=row, column=6).value  # F: F
-                ws.cell(row=ligne_ws, column=7).value = ws2.cell(row=row, column=7).value  # G: G
-                ws.cell(row=ligne_ws, column=8).value = ws2.cell(row=row, column=8).value  # H: H
-                ws.cell(row=ligne_ws, column=9).value = ws2.cell(row=row, column=9).value  # I: I
-                ws.cell(row=ligne_ws, column=10).value = ws2.cell(row=row, column=10).value  # J: J
-                ws.cell(row=ligne_ws, column=11).value = ws2.cell(row=row, column=11).value  # K: K
-                ws.cell(row=ligne_ws, column=12).value = ws2.cell(row=row, column=14).value  # L: N
-                ws.cell(row=ligne_ws, column=13).value = ws2.cell(row=row, column=16).value  # M: P
+                ws.cell(row=ligne_ws, column=1).value = row['ID']  # Nom de parcelle
+                ws.cell(row=ligne_ws, column=2).value = "Sauvignon blanc"  # Cépage: Hardcoded
+                ws.cell(row=ligne_ws, column=3).value = datetime.strptime(date_value, '%d/%m/%Y').strftime('%d/%m/%Y')  # Date analyse
+                ws.cell(row=ligne_ws, column=5).value = row['Sucre']  # Quantité Sucre
+                ws.cell(row=ligne_ws, column=6).value = row['TAP']  # TAP
+                ws.cell(row=ligne_ws, column=7).value = row['AT']  # Acidité totale
+                ws.cell(row=ligne_ws, column=8).value = row['pH']  # pH
+                ws.cell(row=ligne_ws, column=9).value = row['AMal']  # Acide malique
+                ws.cell(row=ligne_ws, column=10).value = row['Tartaric']  # Acide tartrique
+                ws.cell(row=ligne_ws, column=11).value = row['N_ass']  # Azote assimilable
+                ws.cell(row=ligne_ws, column=12).value = row['K']  # Potassium
+                ws.cell(row=ligne_ws, column=13).value = row['Anth']  # Anthocyanes
     
     output = io.BytesIO()
     wb.save(output)
@@ -128,7 +123,7 @@ st.markdown("""
 
 st.title("Export Moûts FOSS vers Dyostem")
 
-uploaded_file = st.file_uploader("Charger le fichier source (.xlsx)", type="xlsx")
+uploaded_file = st.file_uploader("Charger le fichier source (.csv)", type="csv")
 
 if uploaded_file:
     file_content = uploaded_file.getvalue()
