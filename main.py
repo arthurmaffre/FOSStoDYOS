@@ -12,6 +12,8 @@ def create_file(ws, Nom_colonne):
     alphabet = list(string.ascii_uppercase)[:len(Nom_colonne)]
     for count, i in enumerate(Nom_colonne):
         ws[alphabet[count] + str(1)] = i
+    # Set date format on header cell for the date column
+    ws.cell(row=1, column=3).number_format = 'dd/mm/yyyy;@'
     return ws
 
 def get_dates_from_file(file_content):
@@ -39,6 +41,10 @@ def process_file(file_content, selected_date):
     ws = wb.active
     ws = create_file(ws, Nom_colonne)
     
+    # Pre-format the date column (column 3) as date for rows 2 to 1000
+    for row_num in range(2, 1001):
+        ws.cell(row=row_num, column=3).number_format = 'dd/mm/yyyy;@'
+    
     df = pd.read_csv(io.BytesIO(file_content), sep=';', encoding='iso-8859-1')
     
     ligne_ws = 1
@@ -49,7 +55,12 @@ def process_file(file_content, selected_date):
                 ligne_ws += 1
                 ws.cell(row=ligne_ws, column=1).value = row['ID']  # Nom de parcelle
                 ws.cell(row=ligne_ws, column=2).value = "Sauvignon blanc"  # Cépage: Hardcoded
-                ws.cell(row=ligne_ws, column=3).value = datetime.strptime(date_value, '%d/%m/%Y').strftime('%d/%m/%Y')  # Date analyse
+                
+                # Set date as datetime object for proper Excel date format
+                date_obj = datetime.strptime(date_value, '%d/%m/%Y')
+                ws.cell(row=ligne_ws, column=3).value = date_obj
+                ws.cell(row=ligne_ws, column=3).number_format = 'dd/mm/yyyy;@'  # Set display format with ';@' to recognize as Date category
+                
                 ws.cell(row=ligne_ws, column=5).value = row['Sucre']  # Quantité Sucre
                 ws.cell(row=ligne_ws, column=6).value = row['TAP']  # TAP
                 ws.cell(row=ligne_ws, column=7).value = row['AT']  # Acidité totale
