@@ -1,0 +1,7 @@
+Job name: Normal - multi pompage (4137)
+Collection date: 30/10/2024
+Job type: NORMAL(MULTIINTAKE)
+
+Product;ID;Date;GF-5;TAV;AT;AV;SO2 T;SO2 L;SO2 Actif;pH;ATar;Malic;ALac;CO2;IC;IPT;Nuance;A420;A520;A620;D;Air;Heure;Degaz;Remarques;TSat;GF+5;SR-5;SR+5;Sorbic;SucTot;Remark;Type;SubType
+
+VF SO2;PL6-;30/10/2024;0.63;11.51;3.30;0.18;56;14;0.5;3.41;3.87;0.79;0.25;1048;0.059;-2;2.29;-0.043;-0.019;0.121;990.8;-0.15;08:23:46;-0.13;;15;-0.61;0.69;2.71;0.0;2.8;;NORMAL(MULTIINTAKE);VALUE
