@@ -81,7 +81,8 @@ def process_file(file_content, selected_date):
 def format_filename(name):
     if name.startswith("Moûts") and len(name) >= 20:  # Moûts + 14 digits + .csv
         ts = name[5:-4]  # Extract timestamp part: YYYYMMDDHHMMSS
-        if len(ts) == 14 and ts.isdigit():
+        if len(ts) >= 14 and ts.isdigit():
+            ts = ts[:14]  # Take only first 14 digits if longer
             year = ts[0:4]
             month = ts[4:6]
             day = ts[6:8]
@@ -205,6 +206,8 @@ if file_content:
         selected_date_obj = st.date_input(
             "Sélectionner la date",
             value=default_date,
+            min_value=None,
+            max_value=datetime.now().date(),
             format="DD/MM/YYYY"
         )
         
