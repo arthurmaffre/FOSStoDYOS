@@ -7,6 +7,9 @@ import base64
 import os
 import glob
 
+# Import for auto-refresh
+from streamlit_autorefresh import st_autorefresh
+
 st.set_page_config(page_title="Export Moûts FOSS vers Dyostem", layout="wide", initial_sidebar_state="collapsed")
 
 def create_file(ws, Nom_colonne):
@@ -245,3 +248,6 @@ if file_content:
 else:
     if not displayed_options:
         st.info("Aucun fichier CSV Moûts trouvé dans le répertoire Export. Veuillez en charger un.")
+
+# Enable auto-refresh every 5 seconds (5000 ms) to detect new files transparently
+st_autorefresh(interval=5000, limit=None, key="directory_refresh")
